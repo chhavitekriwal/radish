@@ -16,19 +16,34 @@ func main() {
 	}
 	defer l.Close()
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
-	input := make([]byte,1024)
 	for {
-		n,err := conn.Read(input)
+		conn,err := l.Accept()
 		if(err != nil) {
-			fmt.Println("Failed to read input")
+			fmt.Println(err)
+			fmt.Println("Exiting..")
 			os.Exit(1)
 		}
-		fmt.Printf("Read %d bytes\n",n)
-		conn.Write([]byte("+PONG\r\n"))
+		go handleReq(conn)
 	}
+}
+
+func handleReq(conn net.Conn) {
+	input := make([]byte,1024)
+	
+	for {
+		rsize,readErr := conn.Read(input)
+		if(readErr !=nil) {
+			fmt.Println(readErr)
+			fmt.Println("Exiting..")
+			os.Exit(1)
+		}
+		fmt.Printf("Read %d bytes\n",rsize)
+		_,writerr := conn.Write([]byte("+PONG\r\n"))
+		if(writerr != nil) {
+			fmt.Println(writerr)
+			fmt.Println("Exiting..")
+			os.Exit(1)
+		}
+	}
+
 }
