@@ -21,10 +21,14 @@ func main() {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
-
-	_,err = conn.Write([]byte("+PONG\r\n"))
-	if(err!= nil) {
-		fmt.Println("Error writing to connection: ", err.Error())
-		os.Exit(1)
+	input := make([]byte,1024)
+	for {
+		n,err := conn.Read(input)
+		if(err != nil) {
+			fmt.Println("Failed to read input")
+			os.Exit(1)
+		}
+		fmt.Printf("Read %d bytes\n",n)
+		conn.Write([]byte("+PONG\r\n"))
 	}
 }
