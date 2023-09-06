@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -31,18 +32,27 @@ func handleReq(conn net.Conn) {
 	input := make([]byte,1024)
 	
 	for {
-		rsize,readErr := conn.Read(input)
+		n,readErr := conn.Read(input)
 		if(readErr !=nil) {
 			fmt.Println(readErr)
 			fmt.Println("Exiting..")
 			os.Exit(1)
 		}
-		fmt.Printf("Read %d bytes\n",rsize)
-		_,writerr := conn.Write([]byte("+PONG\r\n"))
-		if(writerr != nil) {
-			fmt.Println(writerr)
-			fmt.Println("Exiting..")
-			os.Exit(1)
+		//fmt.Printf("Read %d bytes\n",rsize)
+		
+		resp := string(input[:n])
+		fmt.Println(resp)
+		
+		parts := strings.Split(resp,"\\r\\n")
+		fmt.Println(parts)
+		switch parts[2] {
+		case "PING":
+			conn.Write([]byte("+PONG\r\n"))
+		case "ECHO":
+			msg := "+"+parts[4]+"\r\n"
+			conn.Write([]byte(msg))
+		default:
+			conn.Write([]byte("-NOMATCH\r\n"))
 		}
 	}
 
