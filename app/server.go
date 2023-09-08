@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var m map[string]string
+
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
@@ -15,7 +17,7 @@ func main() {
 		return
 	}
 	defer l.Close()
-
+	m = make(map[string]string)
 	for {
 		conn,err := l.Accept()
 		if(err != nil) {
@@ -25,6 +27,7 @@ func main() {
 		}
 		go handleReq(conn)
 	}
+	
 }
 
 func handleReq(conn net.Conn) {
@@ -46,9 +49,19 @@ func handleReq(conn net.Conn) {
 		case "ECHO":
 			msg := "+"+parts[4]+"\r\n"	
 			conn.Write([]byte(msg))
+		case "SET":
+			m[parts[4]] = parts[6]
+			conn.Write([]byte("+OK\r\n"))
+		case "GET":
+			value,ok := m[parts[4]]
+			if !ok {
+				conn.Write([]byte("-NOTFOUND\r\n"))
+			} else {
+				value = "+"+value+"\r\n" 
+				conn.Write([]byte(value))
+			}
 		default:
 			conn.Write([]byte("-NOMATCH\r\n"))
 		}
 	}
-
 }
